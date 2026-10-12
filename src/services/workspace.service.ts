@@ -1,10 +1,10 @@
 import { AppError } from "../middleware/error.ts";
 import prisma from "../config/prisma.ts";
-import { Role } from "../generated/prisma/browser.ts";
+import { Role } from "../generated/prisma/client.ts";
 import { randomBytes } from "crypto";
 import { sendWorkspaceInviteEmail } from "../utils/resendUtil.ts";  
 
-export const getWorkspaceByUserId = async(userId:number)=>{   
+export const getWorkspacesForUser = async(userId:number)=>{   
     const userWorkspaces = await prisma.workspaceMember.findMany({
         where: {userId},
         include: {
@@ -21,9 +21,12 @@ export const getWorkspaceByUserId = async(userId:number)=>{
 export const getWorkspaceMembers = async(workspaceId:number)=>{
     const members = await prisma.workspaceMember.findMany({
         where: {workspaceId},
-        include: {
-            user:true
-        }
+        select: {
+            role: true,
+            user: {
+                select: { id: true, name: true},
+            },
+        },
     });
     return members.map((m) => ({
         userId: m.user.id,
@@ -51,21 +54,19 @@ export const createWorkspace = async(userId:number, name:string, description?:st
 export const inviteUser = async(workspaceId:number, email:string, role:Role)=>{
     const user = await prisma.user.findUnique({where:{email}});
     try{
-        if(user){
-            const existingMember = await prisma.workspaceMember.findUnique({
-                where:{userId_workspaceId:{userId:user.id, workspaceId}}
-            })
-            if(!existingMember){
+        if (user) {
+            try {
                 await prisma.workspaceMember.create({
-                    data:{
-                        userId:user.id,
-                        workspaceId:workspaceId,
-                        role:role
-                    }
-                })
+                    data: { userId: user.id, workspaceId, role },
+                });
+                return { message: "User successfully added to the workspace!" };
+            } catch (error: any) {
+                if (error.code === 'P2002') {
+                    throw new AppError(409, "User is already a member of this workspace");
+                }
+                throw error;
             }
-            return { message: "User successfully added to the workspace!" };
-        }    
+        }   
 
         if(!user){
             const inviteToken = randomBytes(32).toString('hex');
@@ -101,14 +102,138 @@ export const inviteUser = async(workspaceId:number, email:string, role:Role)=>{
     }catch(error:any){
       if(error.code==='P2002'){
         throw new AppError(409, "User is already a member of this workspace");
-      }else{
-        throw new AppError(500, "An error occurred while inviting the user");
       }
+      throw error;
     }  
     
 }
 
+export const renameWorkspace = async(name:string, workspaceId:number, description?:string)=>{
+    const renamed = await prisma.workspace.update({
+        where:{id:workspaceId},
+        data:{
+            name:name,
+            description:description
+        }
+    })
+    return {message:"Workspace renamed successfully", data:renamed};
+        
+}
 
+export const removeMember = async(userId:number, workspaceId:number, idOfUser:number)=>{
+    const leader = await prisma.workspaceMember.findUnique({
+        where:{userId_workspaceId : {userId: idOfUser, workspaceId: workspaceId}},
+        select:{
+            role:true
+        }
+    })
+    if(leader?.role !== 'OWNER' && leader?.role !== 'ADMIN'){
+       throw new AppError(403, "You do not have permission to remove members from this workspace");
+    }
+    const userToBeRemoved = await prisma.workspaceMember.findUnique({
+        where : {
+            userId_workspaceId :{
+                userId:userId,
+                workspaceId:workspaceId
+            },
+            select:{
+                role:true
+            }
+        }
+    })
+    if(userToBeRemoved && userToBeRemoved.role !== 'OWNER'){
+        await prisma.workspaceMember.delete({
+            where : {
+                userId_workspaceId :{
+                    userId:userId,
+                    workspaceId:workspaceId
+                }
+            }
+        })
+        return {message:"Member removed successfully"};
+    }else{
+        throw new AppError(404, "Member not found");
+    }
+}
 
+export const changeMemberRole = async(userId:number, workspaceId:number, newRole:Role, idOfUser:number)=>{
+    const head = await prisma.workspaceMember.findUnique({
+        where:{userId_workspaceId: {userId:idOfUser, workspaceId:workspaceId}},
+        select:{role:true}
+    })
+    if(!head){
+       throw new AppError(404,"The user is not a member of this workspace")
+    }
+    if(head && head.role !== 'OWNER'){
+        throw new AppError(403, "You do not have permission to change the role of this member");
+    }
+    const changedRole = await prisma.workspaceMember.update({
+        where:{userId_workspaceId: {userId:userId, workspaceId:workspaceId}},
+        data:{role:newRole, roleUpdatedAt: new Date()}
+    })
+    return {message:`Member's role has been successfully changed to ${newRole} at ${changedRole.roleUpdatedAt}`};
+}
 
+export const leaveWorkspace = async (userId: number, workspaceId: number) => {
+  return await prisma.$transaction(async (tx) => {
+    const user = await tx.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: { userId: userId, workspaceId: workspaceId },
+      },
+    });
 
+    if (!user) {
+      throw new AppError(404, "The user doesn't belong to this workspace");
+    }
+
+    if (user.role !== 'OWNER') {
+      await tx.workspaceMember.delete({
+        where: {
+          userId_workspaceId: { userId: userId, workspaceId: workspaceId },
+        },
+      });
+      return;
+    }
+
+    const remainingMembers = await tx.workspaceMember.findMany({
+      where: {
+        workspaceId: workspaceId,
+        userId: { not: userId }, 
+      },
+    });
+
+    if (remainingMembers.length === 0) {
+      await tx.workspace.delete({
+        where: { id: workspaceId },
+      });
+      return;
+    }
+
+    const successor = [...remainingMembers].sort((a, b) => {
+      if (a.role === 'ADMIN' && b.role !== 'ADMIN') return -1;
+      if (a.role !== 'ADMIN' && b.role === 'ADMIN') return 1;
+
+      const dateA = (a.createdAt ?? a.roleUpdatedAt ?? new Date(0)).getTime();
+      const dateB = (b.createdAt ?? b.roleUpdatedAt ?? new Date(0)).getTime();
+      return dateA - dateB;
+    })[0];
+
+    await tx.workspaceMember.update({
+      where: {
+        userId_workspaceId: {
+          userId: successor.userId,
+          workspaceId: successor.workspaceId,
+        },
+      },
+      data: {
+        role: 'OWNER',
+      },
+    });
+
+    await tx.workspaceMember.delete({
+      where: {
+        userId_workspaceId: { userId: userId, workspaceId: workspaceId },
+      },
+    });
+  });
+};

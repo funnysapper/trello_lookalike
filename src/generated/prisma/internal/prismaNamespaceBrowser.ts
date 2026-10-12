@@ -104,7 +104,9 @@ export const WorkspaceMemberScalarFieldEnum = {
   userId: 'userId',
   workspaceId: 'workspaceId',
   role: 'role',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  roleUpdatedAt: 'roleUpdatedAt'
 } as const
 
 export type WorkspaceMemberScalarFieldEnum = (typeof WorkspaceMemberScalarFieldEnum)[keyof typeof WorkspaceMemberScalarFieldEnum]

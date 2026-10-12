@@ -55,6 +55,8 @@ model WorkspaceMember {
   workspaceId Int      @map("workspace_id")
   role        Role     @default(MEMBER)
   createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+  roleUpdatedAt DateTime @default(now()) @map("role_updated_at")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -81,7 +83,7 @@ model Board {
 model Column {
   id        Int      @id @default(autoincrement())
   name      String
-  position  Int
+  position  Int      
   boardId   Int      @map("board_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -97,7 +99,7 @@ model Card {
   id           Int      @id @default(autoincrement())
   title        String
   description  String?
-  position     Int
+  position     Int      
   columnId     Int      @map("column_id")
   createdBy    Int      @map("created_by")
   assignedToId Int?     @map("assigned_to_id")

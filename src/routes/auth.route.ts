@@ -1,14 +1,15 @@
 import {Router} from 'express';
 import {validateSchema} from '../middleware/validateSchema.ts'
-import { loginSchema, logoutSchema, refreshTokenSchema, registerSchema } from '../dtos/register.dto.ts';
+import { loginSchema, logoutSchema, registerSchema } from '../dtos/register.dto.ts';
 import { loginUser, registerUser, logout, refresh } from '../services/auth.service.ts';
 import { requireToken } from '../middleware/authWare.ts';
 import prisma from '../config/prisma.ts';
+import rateLimiter from '../middleware/rateLimiter.ts';
 
 
 const authRouter = Router();
 
-authRouter.post('/login', validateSchema(loginSchema), async(req,res)=>{
+authRouter.post('/login',rateLimiter, validateSchema(loginSchema), async(req,res)=>{
     const {email, password}= req.body; 
     const result = await loginUser(email,password);
     res.cookie('refreshToken',result.refreshToken,{
@@ -48,8 +49,14 @@ authRouter.post('/logout',validateSchema(logoutSchema),async(req,res)=>{
    res.status(200).json(result);
 });
 
-authRouter.post('/refresh',validateSchema(refreshTokenSchema), async(req,res)=>{
-    const {token} = req.body;
+authRouter.post('/refresh', async(req,res)=>{
+    const token = req.cookies.refreshToken;
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Refresh token is missing'
+        });
+    }
     const result = await refresh(token);
     res.cookie('refreshToken',result.refreshToken,{
         httpOnly : true,
