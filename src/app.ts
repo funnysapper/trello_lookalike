@@ -14,8 +14,8 @@ server.use(cookieParser());
 server.use('/auth', authRoutes);
 server.use('/workspace', workspaceRoutes);
 server.use('/board', boardRoutes); 
-server.use('column', columnRoutes);
-server.use('card', cardRoutes);
+server.use('/column', columnRoutes);
+server.use('/card', cardRoutes);
 
 
 

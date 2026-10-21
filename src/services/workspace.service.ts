@@ -135,10 +135,10 @@ export const removeMember = async(userId:number, workspaceId:number, idOfUser:nu
             userId_workspaceId :{
                 userId:userId,
                 workspaceId:workspaceId
-            },
-            select:{
-                role:true
             }
+        },
+        select:{
+            role:true
         }
     })
     if(userToBeRemoved && userToBeRemoved.role !== 'OWNER'){
@@ -152,19 +152,19 @@ export const removeMember = async(userId:number, workspaceId:number, idOfUser:nu
         })
         return {message:"Member removed successfully"};
     }else{
-        throw new AppError(404, "Member not found");
+        throw new AppError(403, "You cannot remove the owner of the workspace");
     }
 }
 
 export const changeMemberRole = async(userId:number, workspaceId:number, newRole:Role, idOfUser:number)=>{
-    const head = await prisma.workspaceMember.findUnique({
+    const caller = await prisma.workspaceMember.findUnique({
         where:{userId_workspaceId: {userId:idOfUser, workspaceId:workspaceId}},
         select:{role:true}
     })
-    if(!head){
+    if(!caller){
        throw new AppError(404,"The user is not a member of this workspace")
     }
-    if(head && head.role !== 'OWNER'){
+    if(caller && caller.role !== 'OWNER'){
         throw new AppError(403, "You do not have permission to change the role of this member");
     }
     const changedRole = await prisma.workspaceMember.update({

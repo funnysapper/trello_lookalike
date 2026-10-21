@@ -1,4 +1,5 @@
 import server from "./app.ts";
+import redis from './config/redis.ts';
 
 const PORT= Number(process.env.PORT);
 

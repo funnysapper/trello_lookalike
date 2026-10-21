@@ -13,7 +13,7 @@ import { requireRole } from '../middleware/requireRole.ts';
 const boardRouter = Router({ mergeParams: true });
 
 
-boardRouter.post('/workspaces/:workspaceId/boards',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER]), async (req: Request, res: Response, next: NextFunction) => {
+boardRouter.post('/workspaces/:id/boards',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER]), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const workspaceId = Number(req.params.id);
         const { name } = req.body;
@@ -25,7 +25,7 @@ boardRouter.post('/workspaces/:workspaceId/boards',requireToken, requireRole([Ro
     }
 });
 
-boardRouter.get('/workspaces/:workspaceId/boards',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER,Role.VIEWER]), async (req: Request, res: Response, next: NextFunction) => {
+boardRouter.get('/workspaces/:id/boards',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER,Role.VIEWER]), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const workspaceId = Number(req.params.id);
 
@@ -36,7 +36,7 @@ boardRouter.get('/workspaces/:workspaceId/boards',requireToken, requireRole([Rol
     }
 });
 
-boardRouter.get('/workspaces/:workspaceId/boards/:boardId', requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER,Role.VIEWER]), async (req: Request, res: Response, next: NextFunction) => {
+boardRouter.get('/workspaces/:id/boards/:boardId', requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER,Role.VIEWER]), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const workspaceId = Number(req.params.id);
         const boardId = Number(req.params.boardId);
@@ -48,7 +48,7 @@ boardRouter.get('/workspaces/:workspaceId/boards/:boardId', requireToken, requir
     }
 });
 
-boardRouter.patch('/workspaces/:workspaceId/boards/:boardId',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER]), async (req: Request, res: Response, next: NextFunction) => {
+boardRouter.patch('/workspaces/:id/boards/:boardId',requireToken, requireRole([Role.OWNER, Role.ADMIN,Role.MEMBER]), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const workspaceId = Number(req.params.id);
         const boardId = Number(req.params.boardId);
@@ -61,7 +61,7 @@ boardRouter.patch('/workspaces/:workspaceId/boards/:boardId',requireToken, requi
     }
 });
 
-boardRouter.delete('/workspaces/:workspaceId/boards/:boardId', requireToken, requireRole([Role.OWNER,Role.ADMIN]), async (req: Request, res: Response, next: NextFunction) => {
+boardRouter.delete('/workspaces/:id/boards/:boardId', requireToken, requireRole([Role.OWNER,Role.ADMIN]), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const workspaceId = Number(req.params.id);
         const boardId = Number(req.params.boardId);

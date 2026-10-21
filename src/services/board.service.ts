@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.ts';
 import { AppError } from '../middleware/error.ts';
+import redis from '../config/redis.ts';
 
 export const createBoard = async (name: string, workspaceId: number) => {
     const newBoard = await prisma.board.create({
@@ -17,11 +18,10 @@ export const renameBoard = async (newName: string, boardId: number, workspaceId:
         where: { id: boardId, workspaceId },
         data: { name: newName },
     });
-
     if (result.count === 0) {
         throw new AppError(404, "Board not found or does not belong to this workspace");
     }
-
+    await redis.del(`board:${boardId}`);
     const board = await prisma.board.findUnique({ where: { id: boardId } });
 
     return { message: "Board has been renamed successfully!", data: board };
@@ -43,6 +43,16 @@ export const deleteBoard = async (boardId: number, workspaceId: number) => {
 };
 
 export const viewBoard = async (workspaceId: number, boardId: number) => {
+    const key = `board:${boardId}`;
+    let cached: string | null =  null;
+    try{
+    const cached = await redis.get(key);
+    }catch(error){
+      console.error('Cache read failed, falling back to database')
+    }
+    if(cached){
+        return {data:JSON.parse(cached), cached:true}
+    }
     const board = await prisma.board.findFirst({
         where: {
             id: boardId,
@@ -60,8 +70,12 @@ export const viewBoard = async (workspaceId: number, boardId: number) => {
     if (!board) {
         throw new AppError( 404, "Board not found");
     }
-
-    return { data: board };
+    try{
+    await redis.setex(key, 60, JSON.stringify(board));
+    }catch(error){
+      console.error('Cache write failed')
+    }
+    return { data: board, cached:false };
 };
 
 export const viewAllBoards = async (workspaceId: number) => {

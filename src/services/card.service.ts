@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.ts';
-import {AppError} from '../middleware/error.ts'
+import {AppError} from '../middleware/error.ts';
+import redis from '../config/redis.ts';
 
 
 export const createCard = async(title:string, userId:number , columnId:number, workspaceId:number, description?:string)=>{
@@ -29,19 +30,29 @@ export const createCard = async(title:string, userId:number , columnId:number, w
     return updatedCard;
 }
 
-export const deleteCard = async(cardId:number,workspaceId:number)=>{
-    const card = await prisma.card.deleteMany({
-        where:{
-            id:cardId,
-            column:{
-                board:{workspaceId}
+export const deleteCard = async (cardId: number, workspaceId: number) => {
+    const card = await prisma.card.findFirst({
+        where: { 
+            id: cardId, 
+            column: { board: { workspaceId } } 
+        },
+        select: {
+            column: {
+                select: { boardId: true }
             }
         }
-    })
-    if(card.count===0){
-       throw new AppError(404,"This card does not exist or does not belong to this column")
+    });
+    if (!card) {
+        throw new AppError(404, "This card does not exist or does not belong to this workspace");
     }
-    return {message:"Card has been deleted successfully"}
+
+    await prisma.card.delete({
+        where: { id: cardId }
+    });
+    const boardId = card.column.boardId;
+    await redis.del(`board:${boardId}`);
+
+    return { message: "Card has been deleted successfully" };
 }
 
 export const editCard = async(cardId:number, workspaceId:number, title:string, description?:string)=>{
@@ -56,8 +67,11 @@ export const editCard = async(cardId:number, workspaceId:number, title:string, d
     data:{
         title:title,
         description:description
-    }
+    },
+    include:{column:{select:{boardId:true}}}
    })
+   const boardId = editedCard.column.boardId;
+   await redis.del(`board:${boardId}`);
    return editedCard;
 }
 
@@ -121,27 +135,35 @@ export const changeCardCol = async (cardId: number, newColId: number, workspaceI
             id: cardId,
             column: { board: { workspaceId } },
         },
+        include: {
+            column: {
+                select: { boardId: true }
+            }
+        }
     });
 
     if (!card) {
         throw new AppError(404, "This card does not exist or does not belong to this workspace.");
     }
 
+    const oldBoardId = card.column.boardId;
+
     if (card.columnId === newColId) {
         throw new AppError(409, "The card is already in this column. Use the reorder endpoint instead.");
     }
-
     const targetColumn = await prisma.column.findFirst({
         where: {
             id: newColId,
             board: { workspaceId },
         },
-        select: { id: true },
+        select: { id: true, boardId: true },
     });
 
     if (!targetColumn) {
         throw new AppError(404, "The target column does not exist or does not belong to this workspace.");
     }
+
+    const newBoardId = targetColumn.boardId;
 
     const cards = await prisma.card.findMany({
         where: { columnId: newColId },
@@ -167,6 +189,8 @@ export const changeCardCol = async (cardId: number, newColId: number, workspaceI
         (cardToLeft && calculatedPosition <= cardToLeft.position) ||
         (cardToRight && calculatedPosition >= cardToRight.position);
 
+    let result;
+
     if (collides) {
         cards.splice(posIndex, 0, card);
 
@@ -183,13 +207,23 @@ export const changeCardCol = async (cardId: number, newColId: number, workspaceI
             ),
         ]);
 
-        return { message: "Card moved (positions renumbered)", data: updated };
+        result = { message: "Card moved (positions renumbered)", data: updated };
+    } else {
+        const moved = await prisma.card.update({
+            where: { id: card.id },
+            data: { columnId: newColId, position: calculatedPosition },
+        });
+
+        result = { message: "Card moved to the new column successfully", data: moved };
     }
 
-    const moved = await prisma.card.update({
-        where: { id: card.id },
-        data: { columnId: newColId, position: calculatedPosition },
-    });
-
-    return { message: "Card moved to the new column successfully", data: moved };
+    try{
+    await redis.del(`board:${oldBoardId}`);
+    }catch(error){
+      console.error('Cache invalidation failed')
+    }
+    if (newBoardId !== oldBoardId) {
+        await redis.del(`board:${newBoardId}`);
+    }
+    return result;
 };
