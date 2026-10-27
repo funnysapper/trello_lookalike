@@ -7,8 +7,12 @@ import cookieParser from 'cookie-parser';
 import boardRoutes from './routes/board.route.ts'; 
 import columnRoutes from './routes/column.route.ts';
 import cardRoutes from './routes/card.route.ts';
+import path from "path";
+import { fileURLToPath } from "url";
 
 const server = express();
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+
 server.use(express.json());
 server.use(cookieParser());
 server.use('/auth', authRoutes);
@@ -16,7 +20,9 @@ server.use('/workspace', workspaceRoutes);
 server.use('/board', boardRoutes); 
 server.use('/column', columnRoutes);
 server.use('/card', cardRoutes);
-
+server.get('/', (req,res)=>{
+    res.sendFile(path.join(_dirname,'test.html'))
+});
 
 
 server.use(errorHandler);

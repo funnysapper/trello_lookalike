@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Socket test</h1>
+<button onclick="joinBoard()">Join Board</button>
+<pre id="log"></pre>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const log = (msg) => {
+    document.getElementById('log').textContent += msg + '\n';
+};
+
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtYWlsIjoibGF6YXJ1c0BnbWFpbC5jb20iLCJpYXQiOjE3OTMxMDgxMDEsImV4cCI6MTc5MzExMTcwMX0.MGPIOLTW6hq7nCh0ytWjaY-CydOnuMncyUtuTq0mwpw';
+
+const socket = io('http://localhost:3000', {
+    auth: { token: TOKEN },
+});
+
+socket.on('connect', () => log('connected: ' + socket.id));
+socket.on('connect_error', (err) => log('error: ' + err.message));
+socket.on('disconnect', () => log('disconnected'));
+</script>
+<script>
+    function joinBoard(){
+        const boardId = Number(prompt('Board id?'))
+        socket.emit('board:join', boardId)
+    }
+    
+    socket.on('board:joined', (response)=>{
+        log('User joined successfully!')
+    })
+    socket.on('board:join:error', (response)=>{
+        log("Couldn't join, you don't belong to this workspace")
+    })
+
+</script>
+
+</body>
+</html>

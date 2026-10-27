@@ -36,6 +36,9 @@ export const getWorkspaceMembers = async(workspaceId:number)=>{
 }
 
 export const createWorkspace = async(userId:number, name:string, description?:string)=>{
+    const existingWorkspace = await prisma.workspace.findUnique({
+        where : {name:name}
+    }) 
     const newWorkspace = await prisma.workspace.create({
         data: {
             name,
@@ -237,3 +240,14 @@ export const leaveWorkspace = async (userId: number, workspaceId: number) => {
     });
   });
 };
+
+export async function getMembership(userId:number, workspaceId:number){
+    return await prisma.workspaceMember.findUnique({
+        where:{
+            userId_workspaceId: {userId,workspaceId}
+        },
+        select:{
+            role:true
+        }
+    })
+}

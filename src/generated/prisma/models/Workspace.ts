@@ -234,17 +234,17 @@ export type WorkspaceOrderByWithRelationInput = {
 
 export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  name?: string
   AND?: Prisma.WorkspaceWhereInput | Prisma.WorkspaceWhereInput[]
   OR?: Prisma.WorkspaceWhereInput[]
   NOT?: Prisma.WorkspaceWhereInput | Prisma.WorkspaceWhereInput[]
-  name?: Prisma.StringFilter<"Workspace"> | string
   description?: Prisma.StringNullableFilter<"Workspace"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Workspace"> | Date | string
   boards?: Prisma.BoardListRelationFilter
   members?: Prisma.WorkspaceMemberListRelationFilter
   invitees?: Prisma.WorkspaceInviteListRelationFilter
-}, "id">
+}, "id" | "name">
 
 export type WorkspaceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
