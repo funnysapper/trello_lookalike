@@ -39,6 +39,9 @@ export const createWorkspace = async(userId:number, name:string, description?:st
     const existingWorkspace = await prisma.workspace.findUnique({
         where : {name:name}
     }) 
+    if(existingWorkspace){
+        throw new AppError(409, 'A workspace with this name already exists')
+    }
     const newWorkspace = await prisma.workspace.create({
         data: {
             name,
