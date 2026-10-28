@@ -33,7 +33,9 @@ socket.on('disconnect', () => log('disconnected'));
     socket.on('board:join:error', (response)=>{
         log("Couldn't join, you don't belong to this workspace")
     })
-
+</script>
+<script>
+socket.on('card:moved', (data) => log('card moved: ' + JSON.stringify(data)));
 </script>
 
 </body>

@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.ts';
 import {AppError} from '../middleware/error.ts';
 import redis from '../config/redis.ts';
+import { emitToBoard } from '../middleware/socket.ts';
 
 
 export const createCard = async(title:string, userId:number , columnId:number, workspaceId:number, description?:string)=>{
@@ -206,19 +207,23 @@ export const changeCardCol = async (cardId: number, newColId: number, workspaceI
                 })
             ),
         ]);
-
         result = { message: "Card moved (positions renumbered)", data: updated };
     } else {
         const moved = await prisma.card.update({
             where: { id: card.id },
             data: { columnId: newColId, position: calculatedPosition },
         });
-
+        emitToBoard(targetColumn.boardId, 'card:moved', {
+            cardId: moved.id,
+            fromColumnId: card.columnId,
+            toColumnId: newColId,
+            position: moved.position,
+        });
         result = { message: "Card moved to the new column successfully", data: moved };
     }
 
     try{
-    await redis.del(`board:${oldBoardId}`);
+        await redis.del(`board:${oldBoardId}`);
     }catch(error){
       console.error('Cache invalidation failed')
     }

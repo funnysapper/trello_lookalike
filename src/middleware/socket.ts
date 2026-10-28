@@ -70,3 +70,12 @@ export function getEngine():Server{
     }
     return websocketEngine;
 }
+
+export function emitToBoard(boardId:number, event:string, data:any){
+    try{
+      getEngine().to(`board:${boardId}`).emit(event, data)
+    }catch(error){
+      console.error('Failed to broadcast the message', error)
+    }
+
+}
