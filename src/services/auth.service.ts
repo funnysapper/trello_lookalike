@@ -15,22 +15,22 @@ async function issueTokens(userId:number, email:string){
         }
     });
     function formatTimeRemaining(expirationMs: number): string {
-    const now = Date.now();
-    const diffMs = expirationMs - now;
+        const now = Date.now();
+        const diffMs = expirationMs - now;
 
-    if (diffMs <= 0) {
-        return 'Expired';
-    }
+        if (diffMs <= 0) {
+            return 'Expired';
+        }
 
-    const seconds = Math.floor(diffMs / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+        const seconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
 
-    if (days > 0) return `${days} days, ${hours % 24} hours remaining`;
-    if (hours > 0) return `${hours} hours, ${minutes % 60} minutes remaining`;
-    if (minutes > 0) return `${minutes} minutes remaining`;
-    return `${seconds} seconds remaining`;
+        if (days > 0) return `${days} days, ${hours % 24} hours remaining`;
+        if (hours > 0) return `${hours} hours, ${minutes % 60} minutes remaining`;
+        if (minutes > 0) return `${minutes} minutes remaining`;
+        return `${seconds} seconds remaining`;
     }
     return {accessToken, refreshToken, expiresIn: formatTimeRemaining(REFRESH_TIME.getTime())};
 }

@@ -103,9 +103,9 @@ cardRouter.patch(
         try {
             const workspaceId = Number(req.params.id);
             const cardId = Number(req.params.cardId);
-            const { newColId, posIndex } = req.body;
+            const { newColId, newPos } = req.body;
 
-            const result = await changeCardCol(cardId, newColId, workspaceId, posIndex);
+            const result = await changeCardCol(cardId, newColId, workspaceId, newPos);
             res.status(200).json(result);
         } catch (error) {
             next(error);

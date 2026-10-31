@@ -17,7 +17,7 @@ export const reorderCardSchema = z.object({
 
 export const moveCardSchema = z.object({
     newColId: z.number().int().positive(),
-    posIndex: z.number().int().min(0),
+    newPos: z.number().int().min(0),
 });
 
 export type CreateCardInput = z.infer<typeof createCardSchema>;

@@ -11,7 +11,7 @@ const log = (msg) => {
     document.getElementById('log').textContent += msg + '\n';
 };
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImVtYWlsIjoibGF6YXJ1c0BnbWFpbC5jb20iLCJpYXQiOjE3OTMxMDgxMDEsImV4cCI6MTc5MzExMTcwMX0.MGPIOLTW6hq7nCh0ytWjaY-CydOnuMncyUtuTq0mwpw';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsImlhdCI6MTc5MzQ2NTA3MSwiZXhwIjoxNzkzNDY4NjcxfQ.BaGkgwGFmvhxX3QEfjgK3ft7dVDkY1i-CzpervkvPQA';
 
 const socket = io('http://localhost:3000', {
     auth: { token: TOKEN },
