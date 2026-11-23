@@ -11,10 +11,11 @@ const log = (msg) => {
     document.getElementById('log').textContent += msg + '\n';
 };
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsImlhdCI6MTc5MzQ2NTA3MSwiZXhwIjoxNzkzNDY4NjcxfQ.BaGkgwGFmvhxX3QEfjgK3ft7dVDkY1i-CzpervkvPQA';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsImlhdCI6MTc5NDkyNjM0NywiZXhwIjoxNzk0OTI5OTQ3fQ.87-spwJ6py0YZL7bRyKBlIPoTflRmb7FQtMc_MB2bx8';
 
 const socket = io('http://localhost:3000', {
     auth: { token: TOKEN },
+    transports:['websocket']
 });
 
 socket.on('connect', () => log('connected: ' + socket.id));

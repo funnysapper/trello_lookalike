@@ -4,11 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:a": "cross-env PORT=3001 INSTANCE_ID=A tsx watch src/server.ts",
+    "dev:b": "cross-env PORT=3002 INSTANCE_ID=B tsx watch src/server.ts",
+    "test:push": "dotenv -e .env.test -- prisma db push",
+    "test": "dotenv -e .env.test -- vitest run",
+    "test:watch": "dotenv -e .env.test -- vitest"
   },
   "keywords": [],
   "author": "",
@@ -17,15 +21,20 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
+    "http-proxy-middleware": "^3.0.11",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "pino-pretty": "^13.2.0",
     "prisma": "^7.10.0",
     "resend": "^6.32.0",
     "socket.io": "^4.8.4",
@@ -39,8 +48,12 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.3",
+    "@types/supertest": "^7.2.1",
     "cross-env": "^10.1.0",
+    "dotenv-cli": "^11.1.0",
+    "supertest": "^7.3.2",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
   }
 }

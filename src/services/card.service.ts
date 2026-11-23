@@ -2,6 +2,7 @@ import prisma from '../config/prisma.ts';
 import {AppError} from '../middleware/error.ts';
 import redis from '../config/redis.ts';
 import { emitToBoard } from '../middleware/socket.ts';
+import logger from '../config/logger.ts';
 
 
 export const createCard = async(title:string, userId:number , columnId:number, workspaceId:number, description?:string)=>{
@@ -247,6 +248,7 @@ export const changePosInCol = async (cardId: number,columnId: number,newPos: num
         position: result.updatedCard!.position,
         cards: result.cards,
     });
+    logger.info(`Card ${result.updatedCard!.id} moved within column ${columnId} in board ${result.boardId}`);
 
     return {
         message: "Card reordered successfully",

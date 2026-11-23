@@ -4,6 +4,8 @@ import { verifyToken } from '../config/tokens.ts';
 import { SocketData } from '../socket.types.ts';
 import prisma from '../config/prisma.ts';
 import {getMembership} from '../services/workspace.service.ts';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { pubClient, subClient } from '../config/redis.ts';
 
 let websocketEngine: Server;
 
@@ -11,6 +13,7 @@ export function initSocket(httpServer:HttpServer){
     websocketEngine = new Server<{},{},{},SocketData>(httpServer,{
         cors: {origin: '*'}
     })
+    websocketEngine.adapter(createAdapter(pubClient, subClient));
     
     websocketEngine.use((socket,next)=>{
         const token = socket.handshake.auth.token;

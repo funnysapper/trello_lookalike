@@ -87,7 +87,7 @@ export const inviteUser = async(workspaceId:number, email:string, role:Role)=>{
                     expiresAt: expiresAt
                 }
             });
-            const inviteLink = `http://localhost:6000/invite?token=${inviteToken}`;
+            const inviteLink = `http://localhost:3000/invite?token=${inviteToken}`;
             const invitedWorkspaceId = invite.workspaceId;
             const workspaceName = await prisma.workspace.findUnique({
                 where:{

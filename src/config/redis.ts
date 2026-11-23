@@ -14,3 +14,7 @@ redis.on('error',(error:Error)=>{
 })
 
 export default redis;
+export const pubClient = redis.duplicate();
+export const subClient = redis.duplicate();
+pubClient.on('error', (err) => console.error('Redis Pub error:', err.message));
+subClient.on('error', (err) => console.error('Redis Sub error:', err.message));
